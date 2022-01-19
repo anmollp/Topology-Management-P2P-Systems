@@ -44,9 +44,11 @@ class Node:
         return k_nearest_neighbors
 
     def update_neighbors(self, identifier_list, k):
-        merged_list = set(identifier_list).union(set(self.neighbors))
+        merged_list = set(self.neighbors).union(set(identifier_list))
+
         if self in merged_list:
             merged_list.remove(self)
+
         self.neighbors = self.select_k_nearest_neighbors(list(merged_list), k)
 
 

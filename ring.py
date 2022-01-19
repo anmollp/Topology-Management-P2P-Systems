@@ -2,21 +2,19 @@ import heapq
 import math
 import matplotlib.pyplot as plt
 import random
-import numpy as np
+import networkx as nx
 
-from Node import Node
+from node import Node
 from utils import Utils
 
 
-class Topology:
-    def __init__(self, topology_type, num_nodes, k, epochs, m, radii):
-        self.topology_type = topology_type
+class Ring:
+    def __init__(self, num_nodes, k, epochs):
         self.num_nodes = num_nodes
         self.epochs = epochs
         self.nodes = []
         self.k = k
-        self.m = m
-        self.radii = radii
+        self.counter = 0
         self.build_nodes()
         self.initialise_network_of_nodes()
         self.evolve_network()
@@ -80,9 +78,9 @@ class Topology:
         co_ordinates = set((math.cos(t), math.sin(t)) for t in theta)
 
         colored_nodes = self.get_nodes_color_randomized(3, co_ordinates)
-        points, r, g, b, color = zip(*colored_nodes)
+        points, red, green, blue, color = zip(*colored_nodes)
 
-        X, Y, Z = Utils.transform_rgb_to_xyz(r, g, b)
+        X, Y, Z = Utils.transform_rgb_to_xyz(red, green, blue)
         l, a, b = Utils.transform_xyz_to_cie_l_ab(X, Y, Z)
 
         for i in range(0, self.num_nodes):
@@ -90,7 +88,7 @@ class Topology:
             node.l_distance = l[i]
             node.a_distance = a[i]
             node.b_distance = b[i]
-            node.r_g_b = [r[i], g[i], b[i]]
+            node.r_g_b = [red[i], green[i], blue[i]]
             node.color = color[i]
             self.nodes.append(node)
 
@@ -110,43 +108,77 @@ class Topology:
         random_neighbor.update_neighbors(current_node_identifiers, self.k)
 
     def evolve_network(self):
+        network_color_file_name = "/Users/anmol/Desktop/node_colors.txt"
+        self.write_network_color_to_file(network_color_file_name)
         for _ in range(self.epochs):
             for i in range(self.num_nodes):
                 self.communicate(self.nodes[i])
         file_name = "/Users/anmol/Desktop/nodes_{}.txt".format(self.epochs)
-        # self.write_network_topology_to_file(file_name)
-        self.plot_red_nodes()
+        self.write_network_topology_to_file(file_name)
+
+        self.plot_network("red", "/Users/anmol/Desktop/red_nodes_{}.jpg".format(self.epochs))
+        self.plot_network("green", "/Users/anmol/Desktop/green_nodes_{}.jpg".format(self.epochs))
+        self.plot_network("blue", "/Users/anmol/Desktop/blue_nodes_{}.jpg".format(self.epochs))
+
+    def write_network_color_to_file(self, file_name):
+        with open(file_name, 'w+') as f:
+            for i in range(self.num_nodes):
+                f.write(str(self.nodes[i].id) + " " + self.nodes[i].color + "\n")
 
     def write_network_topology_to_file(self, file_name):
         with open(file_name, 'w+') as f:
             for i in range(self.num_nodes):
                 neighbor_ids = [str(node.id) for node in self.nodes[i].neighbors]
-                f.write(str(self.nodes[i].id) + "~" + self.nodes[i].color + " : " + ",".join(neighbor_ids) + "\n")
+                f.write(str(self.nodes[i].id) + " : " + ",".join(neighbor_ids) + "\n")
 
-    def plot_red_nodes(self):
-        red_nodes = filter(lambda x: x.color == 'red', self.nodes)
-        red_node_neighbors = set([nei for red_node in red_nodes for nei in red_node.neighbors])
+    def plot_network(self, color, image_file_name):
+        nodes = set(filter(lambda x: x.color == color, self.nodes))
+        node_neighbors = set([nei for node in nodes for nei in node.neighbors])
+
+        all_nodes = nodes.union(node_neighbors)
+
         rgb, X, Y = [], [], []
-        for node in red_nodes:
+        indices = {}
+        position = {}
+        for node in all_nodes:
             rgb.append(node.r_g_b)
             X.append(node.position.x)
             Y.append(node.position.y)
+            indices[node.id] = self.counter
+            position[node.id] = (node.position.x, node.position.y)
+            self.counter += 1
 
-        for node in red_node_neighbors:
-            rgb.append(node.r_g_b)
-            X.append(node.position.x)
-            Y.append(node.position.y)
+        # for node in red_node_neighbors:
+        #     rgb.append(node.r_g_b)
+        #     X.append(node.position.x)
+        #     Y.append(node.position.y)
+        #     indices[node.id] = counter
+        #     position[node.id] = (node.position.x, node.position.y)
+        #     counter += 1
 
-        colors = np.array([[abs(i[0]), abs(i[1]), abs(i[2])] for i in rgb])
-        # print(colors)
-        plt.xlim(-math.pi, math.pi)
-        plt.scatter(X, Y, c=colors / 255.0, s=30)
-        plt.grid(True)
-        plt.show()
+        edges = [(indices[node.id], indices[nei.id]) for node in nodes for nei in node.neighbors]
+
+        graph = nx.Graph()
+        # graph.add_nodes_from(position)
+        for key, value in position.items():
+            graph.add_node(key, pos=value)
+        graph.add_edges_from(edges)
+
+        pos = nx.get_node_attributes(graph, 'pos')
+        nx.draw_networkx(graph, pos, node_color=color)
+        # plt.axis('on')
+        plt.grid('on')
+        plt.savefig(image_file_name)
+        graph.clear()
+        plt.clf()
+
+        # colors = np.array([[i[0], i[1], i[2]] for i in rgb])
+
+        # plt.scatter(X, Y, c=colors / 255.0, s=len(X))
+        # plt.plot(X, Y, '-')
+        # plt.grid(True)
+        #
 
 
 if __name__ == "__main__":
-    ring_topology = Topology("Ring", 20, 10, 5, None, None)
-    m = 5
-    r_m = [i*i + 1 for i in range(m)]
-    dynamic_ring_topology = Topology("Dynamic_Ring", 20, 6, 5, m, r_m)
+    ring_topology = Ring(45, 5, 40)

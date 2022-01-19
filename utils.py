@@ -91,3 +91,8 @@ class Utils:
         b = (point_B[2] - point_A[2]) ** 2
         delta = math.sqrt(l + a + b)
         return delta
+
+    @staticmethod
+    def convert_to_hex(rgba_color):
+        red, green, blue = rgba_color
+        return '#%02x%02x%02x' % (red, green, blue)
