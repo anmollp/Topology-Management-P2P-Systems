@@ -1,9 +1,11 @@
 import random
 import numpy as np
 import math
+import heapq
 
 
 class Utils:
+    """A utility class for methods frequently used in building a topology"""
 
     def __init__(self):
         pass
@@ -42,6 +44,13 @@ class Utils:
 
     @staticmethod
     def transform_rgb_to_xyz(r, g, b):
+        """
+        Convert R G B values to X Y Z based on the formula provided
+        :param r: Red vector containing redness values on a scale of 0 to 255
+        :param g: Green vector containing greenness values on a scale of 0 to 255
+        :param b: Blue vector containing blueness values on a scale of 0 to 255
+        :return: X Y Z values
+        """
         sR = np.array(r)
         sG = np.array(g)
         sB = np.array(b)
@@ -66,6 +75,13 @@ class Utils:
 
     @staticmethod
     def transform_xyz_to_cie_l_ab(x, y, z):
+        """
+        Convert X Y Z values to cie-l, cie-a, cie-b based on the formula provided
+        :param x: X vector
+        :param y: Y vector
+        :param z: Z vector
+        :return: cie-l, cie-a, cie-b
+        """
         reference_x = 94.811
         reference_y = 100.00
         reference_z = 107.304
@@ -85,14 +101,53 @@ class Utils:
         return cie_l, cie_a, cie_b
 
     @staticmethod
-    def compute_distance(point_A, point_B):
-        l = (point_B[0] - point_A[0]) ** 2
-        a = (point_B[1] - point_A[1]) ** 2
-        b = (point_B[2] - point_A[2]) ** 2
+    def compute_distance(point_a, point_b):
+        """
+        Calculate the cie distance between two points
+        :param point_a: 1st point
+        :param point_b: 2nd point
+        :return: distance between points
+        """
+        l = (point_b[0] - point_a[0]) ** 2
+        a = (point_b[1] - point_a[1]) ** 2
+        b = (point_b[2] - point_a[2]) ** 2
         delta = math.sqrt(l + a + b)
         return delta
 
     @staticmethod
     def convert_to_hex(rgba_color):
+        """
+        convert rgb to hex color
+        :param rgba_color:
+        :return: hex coding of color
+        """
         red, green, blue = rgba_color
         return '#%02x%02x%02x' % (red, green, blue)
+
+    @staticmethod
+    def select_k_neighbors(node, all_nodes, k):
+        """
+        min heap based finding k nearest neighbors based on the distance criteria as provided in the assignment
+        :param node: the node whose nearest neighbors is to be calculated
+        :param all_nodes: set of all nodes
+        :param k: the number of neighbors to choose
+        :return: k nearest neighboring nodes
+        """
+        distance_pq = []
+
+        for i in range(len(all_nodes)):
+            if node.id == all_nodes[i].id:
+                continue
+            point_A = (node.l_distance, node.a_distance, node.b_distance)
+            point_B = (all_nodes[i].l_distance, all_nodes[i].a_distance, all_nodes[i].b_distance)
+            dist = Utils.compute_distance(point_A, point_B)
+            heapq.heappush(distance_pq, (dist, all_nodes[i].id, all_nodes[i]))
+
+        k_nearest_neighbors = []
+
+        while k:
+            _, _, node = heapq.heappop(distance_pq)
+            k_nearest_neighbors.append(node)
+            k -= 1
+
+        return k_nearest_neighbors

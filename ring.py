@@ -1,4 +1,3 @@
-import heapq
 import math
 import matplotlib.pyplot as plt
 import random
@@ -52,28 +51,7 @@ class Ring:
 
         return points_colored
 
-    def select_k_neighbors(self, node):
-        distance_pq = []
-
-        for i in range(self.num_nodes):
-            if node.id == self.nodes[i].id:
-                continue
-            point_A = (node.l_distance, node.a_distance, node.b_distance)
-            point_B = (self.nodes[i].l_distance, self.nodes[i].a_distance, self.nodes[i].b_distance)
-            dist = Utils.compute_distance(point_A, point_B)
-            heapq.heappush(distance_pq, (dist, self.nodes[i].id, self.nodes[i]))
-
-        k_nearest_neighbors = []
-        top_k = self.k
-        while top_k:
-            _, _, node = heapq.heappop(distance_pq)
-            k_nearest_neighbors.append(node)
-            top_k -= 1
-
-        return k_nearest_neighbors
-
     def build_nodes(self):
-        # theta = [math.pi / 2 - ((i - 1) * (math.pi / (self.num_nodes - 2))) for i in range(self.num_nodes)]
         theta = [2 * math.pi / self.num_nodes * i for i in range(self.num_nodes)]
         co_ordinates = set((math.cos(t), math.sin(t)) for t in theta)
 
@@ -95,16 +73,17 @@ class Ring:
     def initialise_network_of_nodes(self):
         for i in range(self.num_nodes):
             node = self.nodes[i]
-            neighbors = self.select_k_neighbors(node)
+            neighbors = Utils.select_k_neighbors(node, self.nodes, self.k)
             node.neighbors = neighbors
 
-    def communicate(self, node):
+    def communicate(self, node, one_way=False):
         random_neighbor = node.select_random_neighbor(self.k)
 
         current_node_identifiers = node.get_identifiers() + [node]
-        random_neighbor_identifiers = random_neighbor.get_identifiers() + [random_neighbor]
+        if not one_way:
+            random_neighbor_identifiers = random_neighbor.get_identifiers() + [random_neighbor]
+            node.update_neighbors(random_neighbor_identifiers, self.k)
 
-        node.update_neighbors(random_neighbor_identifiers, self.k)
         random_neighbor.update_neighbors(current_node_identifiers, self.k)
 
     def evolve_network(self):
@@ -138,47 +117,31 @@ class Ring:
         all_nodes = nodes.union(node_neighbors)
 
         rgb, X, Y = [], [], []
-        indices = {}
         position = {}
+        color_map = []
+
         for node in all_nodes:
             rgb.append(node.r_g_b)
             X.append(node.position.x)
             Y.append(node.position.y)
-            indices[node.id] = self.counter
             position[node.id] = (node.position.x, node.position.y)
-            self.counter += 1
+            color_map.append(Utils.convert_to_hex(tuple(node.r_g_b)))
 
-        # for node in red_node_neighbors:
-        #     rgb.append(node.r_g_b)
-        #     X.append(node.position.x)
-        #     Y.append(node.position.y)
-        #     indices[node.id] = counter
-        #     position[node.id] = (node.position.x, node.position.y)
-        #     counter += 1
-
-        edges = [(indices[node.id], indices[nei.id]) for node in nodes for nei in node.neighbors]
+        edges = [(node.id, nei.id) for node in nodes for nei in node.neighbors]
 
         graph = nx.Graph()
-        # graph.add_nodes_from(position)
         for key, value in position.items():
             graph.add_node(key, pos=value)
         graph.add_edges_from(edges)
 
         pos = nx.get_node_attributes(graph, 'pos')
-        nx.draw_networkx(graph, pos, node_color=color)
-        # plt.axis('on')
+        nx.draw_networkx(graph, pos, node_color=color_map, edge_color=color_map)
         plt.grid('on')
         plt.savefig(image_file_name)
+        print(nx.is_connected(graph))
         graph.clear()
         plt.clf()
 
-        # colors = np.array([[i[0], i[1], i[2]] for i in rgb])
-
-        # plt.scatter(X, Y, c=colors / 255.0, s=len(X))
-        # plt.plot(X, Y, '-')
-        # plt.grid(True)
-        #
-
 
 if __name__ == "__main__":
-    ring_topology = Ring(45, 5, 40)
+    ring_topology = Ring(10, 3, 40)

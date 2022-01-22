@@ -1,6 +1,5 @@
 import math
 import random
-import heapq
 import matplotlib.pyplot as plt
 from collections import deque
 import networkx as nx
@@ -11,6 +10,9 @@ from TwoDPoint import TwoDPoint
 
 
 class DynamicRing:
+    """
+    Dynamic Ring Topology
+    """
     def __init__(self, num_nodes, k, m, radii):
         self.num_nodes = num_nodes
         self.epochs = m * 5
@@ -27,6 +29,12 @@ class DynamicRing:
 
     @staticmethod
     def get_nodes_color_randomized(points_set: set, num_nodes):
+        """
+        get random colored nodes
+        :param points_set: a set of points with a specified x,y position on the topology curve
+        :param num_nodes: total number of nodes in the topology
+        :return: colored nodes
+        """
         points_colored = []
 
         for i in range(num_nodes):
@@ -38,6 +46,10 @@ class DynamicRing:
         return points_colored
 
     def build_nodes(self):
+        """
+        build the topology with user input number of nodes on a ring
+        :return:
+        """
         theta = [2 * math.pi / self.num_nodes * i for i in range(self.num_nodes)]
         co_ordinates = set((self.radius * math.cos(t), self.radius * math.sin(t)) for t in theta)
 
@@ -57,6 +69,10 @@ class DynamicRing:
             self.nodes.append(node)
 
     def add_build_nodes(self):
+        """
+        Dynamically change the ring to increase in radius and allow additional nodes to join the topology
+        :return:
+        """
         total_nodes = self.num_nodes + self.num_new_nodes
         theta = [2 * math.pi / total_nodes * i for i in range(total_nodes)]
         co_ordinates = set((self.radius * math.cos(t), self.radius * math.sin(t)) for t in theta)
@@ -92,33 +108,22 @@ class DynamicRing:
 
         self.nodes = self.nodes + self.new_nodes
 
-    def select_k_neighbors(self, node):
-        distance_pq = []
-
-        for i in range(self.num_nodes):
-            if node.id == self.nodes[i].id:
-                continue
-            point_A = (node.l_distance, node.a_distance, node.b_distance)
-            point_B = (self.nodes[i].l_distance, self.nodes[i].a_distance, self.nodes[i].b_distance)
-            dist = Utils.compute_distance(point_A, point_B)
-            heapq.heappush(distance_pq, (dist, self.nodes[i].id, self.nodes[i]))
-
-        k_nearest_neighbors = []
-        top_k = self.k
-        while top_k:
-            _, _, node = heapq.heappop(distance_pq)
-            k_nearest_neighbors.append(node)
-            top_k -= 1
-
-        return k_nearest_neighbors
-
     def initialise_network_of_nodes(self):
+        """
+        Initiate network building
+        :return:
+        """
         for i in range(self.num_nodes):
             node = self.nodes[i]
-            neighbors = self.select_k_neighbors(node)
+            neighbors = Utils.select_k_neighbors(node, self.nodes, self.k)
             node.neighbors = neighbors
 
     def communicate(self, node):
+        """
+        Communication between a node and its randomly selected neighbor
+        :param node: the node that initiates communication
+        :return:
+        """
         random_neighbor = node.select_random_neighbor(self.k)
 
         current_node_identifiers = node.get_identifiers() + [node]
@@ -128,6 +133,10 @@ class DynamicRing:
         random_neighbor.update_neighbors(current_node_identifiers, self.k)
 
     def evolve_network(self):
+        """
+        Network evolution and dynamic change in ring topology for every 5th epoch
+        :return:
+        """
         for _ in range(self.epochs):
             if self.iteration % 5 == 0:
                 self.rearrange_nodes()
@@ -136,23 +145,33 @@ class DynamicRing:
             if self.iteration == 1 or self.iteration % 5 == 0:
                 file_name = "/Users/anmol/Desktop/nodes_{}.txt".format(self.iteration)
                 self.write_network_topology_to_file(file_name)
-                image_file_name = "/Users/anmol/Desktop/all_nodes_{}.jpg".format(self.iteration)
+                image_file_name = "/Users/anmol/Desktop/all_nodes_{}.png".format(self.iteration)
                 self.plot_network(image_file_name)
             self.iteration += 1
 
     def rearrange_nodes(self):
+        """
+        Change the radius of the topology and include new nodes.
+        :return:
+        """
         self.num_new_nodes = new_radius = self.radii.popleft()
         self.radius = new_radius
         self.add_build_nodes()
         self.new_nodes = []
 
     def write_network_topology_to_file(self, file_name):
+        """A writer method that writes current topology to a file"""
         with open(file_name, 'w+') as f:
             for i in range(self.num_nodes):
                 neighbor_ids = [str(node.id) for node in self.nodes[i].neighbors]
                 f.write(str(self.nodes[i].id) + " " + self.nodes[i].color + " : " + ",".join(neighbor_ids) + "\n")
 
     def plot_network(self, image_file_name):
+        """
+        Visualising the network at current instant of time.
+        :param image_file_name: a file to capture the network snapshot
+        :return:
+        """
         position = {}
         rgb, X, Y = [], [], []
         color_map = []
@@ -163,19 +182,7 @@ class DynamicRing:
             Y.append(node.position.y)
             position[node.id] = (node.position.x, node.position.y)
             color_map.append(Utils.convert_to_hex(tuple(node.r_g_b)))
-        # rgb, X, Y = [], [], []
-        # for node in self.nodes:
-        #     rgb.append(node.r_g_b)
-        #     X.append(node.position.x)
-        #     Y.append(node.position.y)
 
-        # colors = np.array([[i[0], i[1], i[2]] for i in rgb])
-        # plt.xlim(-math.pi, math.pi)
-        # plt.scatter(X, Y, c=colors / 255.0, s=self.num_nodes)
-        # plt.plot(X, Y)
-        # # plt.grid(True)
-        # plt.savefig(image_file_name)
-        # plt.clf()
         edges = [(node.id, nei.id) for node in self.nodes for nei in node.neighbors]
 
         graph = nx.Graph()
@@ -184,7 +191,7 @@ class DynamicRing:
         graph.add_edges_from(edges)
 
         pos = nx.get_node_attributes(graph, 'pos')
-        nx.draw_networkx(graph, pos, node_color=color_map)
+        nx.draw_networkx(graph, pos, node_color=color_map, node_size=5, with_labels=False, edge_color=color_map)
         plt.grid('on')
         plt.savefig(image_file_name)
         graph.clear()
@@ -193,4 +200,4 @@ class DynamicRing:
 
 if __name__ == "__main__":
     radii = [2, 3, 5, 7, 8]
-    drt = DynamicRing(45, 4, 5, radii)
+    drt = DynamicRing(10, 3, 5, radii)
