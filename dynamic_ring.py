@@ -13,6 +13,7 @@ class DynamicRing:
     """
     Dynamic Ring Topology
     """
+
     def __init__(self, num_nodes, k, m, radii):
         self.num_nodes = num_nodes
         self.epochs = m * 5
@@ -137,16 +138,20 @@ class DynamicRing:
         Network evolution and dynamic change in ring topology for every 5th epoch
         :return:
         """
+        network_color_file_name = "/Users/anmol/Desktop/EEL6761/D_N{}_k{}.txt".format(self.num_nodes, self.k)
+        Utils.write_network_color_to_file(self.nodes, network_color_file_name)
         for _ in range(self.epochs):
             if self.iteration % 5 == 0:
                 self.rearrange_nodes()
             for i in range(self.num_nodes):
                 self.communicate(self.nodes[i])
             if self.iteration == 1 or self.iteration % 5 == 0:
-                file_name = "/Users/anmol/Desktop/nodes_{}.txt".format(self.iteration)
-                self.write_network_topology_to_file(file_name)
-                image_file_name = "/Users/anmol/Desktop/all_nodes_{}.png".format(self.iteration)
+                image_file_name = "/Users/anmol/Desktop/EEL6761/D_N{}_k{}_{}_{}.jpg".format(self.num_nodes, self.k,
+                                                                                            "all", self.iteration)
                 self.plot_network(image_file_name)
+                file_name = "/Users/anmol/Desktop/EEL6761/D_N{}_k{}_{}_{}.txt".format(self.num_nodes, self.k, "all",
+                                                                                      self.iteration)
+                Utils.write_network_topology_to_file(self.nodes, file_name)
             self.iteration += 1
 
     def rearrange_nodes(self):
@@ -158,13 +163,6 @@ class DynamicRing:
         self.radius = new_radius
         self.add_build_nodes()
         self.new_nodes = []
-
-    def write_network_topology_to_file(self, file_name):
-        """A writer method that writes current topology to a file"""
-        with open(file_name, 'w+') as f:
-            for i in range(self.num_nodes):
-                neighbor_ids = [str(node.id) for node in self.nodes[i].neighbors]
-                f.write(str(self.nodes[i].id) + " " + self.nodes[i].color + " : " + ",".join(neighbor_ids) + "\n")
 
     def plot_network(self, image_file_name):
         """

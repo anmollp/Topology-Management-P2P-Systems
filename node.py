@@ -9,6 +9,7 @@ class Node:
     """
     Node class that represents a single node entity
     """
+
     def __init__(self, node_id, x_co_ordinate, y_co_ordinate):
         """
         Initializer
@@ -76,6 +77,3 @@ class Node:
             merged_list.remove(self)
 
         self.neighbors = self.select_k_nearest_neighbors(list(merged_list), k)
-
-
-    

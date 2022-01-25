@@ -1,7 +1,6 @@
 import random
 import numpy as np
 import math
-import heapq
 
 
 class Utils:
@@ -133,21 +132,35 @@ class Utils:
         :param k: the number of neighbors to choose
         :return: k nearest neighboring nodes
         """
-        distance_pq = []
-
-        for i in range(len(all_nodes)):
-            if node.id == all_nodes[i].id:
-                continue
-            point_A = (node.l_distance, node.a_distance, node.b_distance)
-            point_B = (all_nodes[i].l_distance, all_nodes[i].a_distance, all_nodes[i].b_distance)
-            dist = Utils.compute_distance(point_A, point_B)
-            heapq.heappush(distance_pq, (dist, all_nodes[i].id, all_nodes[i]))
-
+        nodes = set(all_nodes)
+        nodes.remove(node)
         k_nearest_neighbors = []
 
-        while k:
-            _, _, node = heapq.heappop(distance_pq)
-            k_nearest_neighbors.append(node)
-            k -= 1
+        n = k
+        while n:
+            neighbor = random.choice(tuple(nodes))
+            k_nearest_neighbors.append(neighbor)
+            nodes.remove(neighbor)
+            n -= 1
 
         return k_nearest_neighbors
+
+    @staticmethod
+    def write_network_color_to_file(nodes, file_name):
+        """
+        A writer method that writes current topology nodes color to a file
+        :param nodes: list of nodes
+        :param file_name: a file to capture the colored network snapshot
+        :return:
+        """
+        with open(file_name, 'w+') as f:
+            for i in range(len(nodes)):
+                f.write(str(nodes[i].id) + " " + nodes[i].color + "\n")
+
+    @staticmethod
+    def write_network_topology_to_file(nodes, file_name):
+        """A writer method that writes current topology to a file"""
+        with open(file_name, 'w+') as f:
+            for i in range(len(nodes)):
+                neighbor_ids = [str(node.id) for node in nodes[i].neighbors]
+                f.write(str(nodes[i].id) + " : " + ",".join(neighbor_ids) + "\n")

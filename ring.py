@@ -10,7 +10,7 @@ from utils import Utils
 class Ring:
     def __init__(self, num_nodes, k, epochs):
         self.num_nodes = num_nodes
-        self.epochs = epochs
+        self.epochs = epochs + 1
         self.nodes = []
         self.k = k
         self.counter = 0
@@ -28,6 +28,12 @@ class Ring:
         return red_count, green_count, blue_count
 
     def get_nodes_color_randomized(self, groups, points_set: set):
+        """
+        get random colored nodes from red green and blue
+        :param groups: number of color groups
+        :param points_set: a set of points with a specified x,y position on the topology curve
+        :return: colored nodes
+        """
         red, green, blue = self.get_color_count(groups)
         points_colored = []
 
@@ -52,6 +58,10 @@ class Ring:
         return points_colored
 
     def build_nodes(self):
+        """
+        build the topology with user input number of nodes on a ring
+        :return:
+        """
         theta = [2 * math.pi / self.num_nodes * i for i in range(self.num_nodes)]
         co_ordinates = set((math.cos(t), math.sin(t)) for t in theta)
 
@@ -71,12 +81,22 @@ class Ring:
             self.nodes.append(node)
 
     def initialise_network_of_nodes(self):
+        """
+        Initiate network building
+        :return:
+        """
         for i in range(self.num_nodes):
             node = self.nodes[i]
             neighbors = Utils.select_k_neighbors(node, self.nodes, self.k)
             node.neighbors = neighbors
 
     def communicate(self, node, one_way=False):
+        """
+        Communication between a node and its randomly selected neighbor
+        :param node: the node that initiates communication
+        :param one_way: if true initiate only a one-sided communication otherwise a two-way communication
+        :return:
+        """
         random_neighbor = node.select_random_neighbor(self.k)
 
         current_node_identifiers = node.get_identifiers() + [node]
@@ -87,30 +107,32 @@ class Ring:
         random_neighbor.update_neighbors(current_node_identifiers, self.k)
 
     def evolve_network(self):
-        network_color_file_name = "/Users/anmol/Desktop/node_colors.txt"
-        self.write_network_color_to_file(network_color_file_name)
-        for _ in range(self.epochs):
-            for i in range(self.num_nodes):
-                self.communicate(self.nodes[i])
-        file_name = "/Users/anmol/Desktop/nodes_{}.txt".format(self.epochs)
-        self.write_network_topology_to_file(file_name)
-
-        self.plot_network("red", "/Users/anmol/Desktop/red_nodes_{}.jpg".format(self.epochs))
-        self.plot_network("green", "/Users/anmol/Desktop/green_nodes_{}.jpg".format(self.epochs))
-        self.plot_network("blue", "/Users/anmol/Desktop/blue_nodes_{}.jpg".format(self.epochs))
-
-    def write_network_color_to_file(self, file_name):
-        with open(file_name, 'w+') as f:
-            for i in range(self.num_nodes):
-                f.write(str(self.nodes[i].id) + " " + self.nodes[i].color + "\n")
-
-    def write_network_topology_to_file(self, file_name):
-        with open(file_name, 'w+') as f:
-            for i in range(self.num_nodes):
-                neighbor_ids = [str(node.id) for node in self.nodes[i].neighbors]
-                f.write(str(self.nodes[i].id) + " : " + ",".join(neighbor_ids) + "\n")
+        """
+        Network evolution
+        :return:
+        """
+        network_color_file_name = "/Users/anmol/Desktop/EEL6761/R_N{}_k{}.txt".format(self.num_nodes, self.k)
+        Utils.write_network_color_to_file(self.nodes, network_color_file_name)
+        for i in range(1, self.epochs):
+            for j in range(self.num_nodes):
+                self.communicate(self.nodes[j])
+            if i % 5 == 0:
+                colors = ["red", "green", "blue"]
+                for color in colors:
+                    image_file_name = "/Users/anmol/Desktop/EEL6761/R_N{}_k{}_{}_{}.jpg".format(self.num_nodes, self.k,
+                                                                                                color, i)
+                    self.plot_network(color, image_file_name)
+                    file_name = "/Users/anmol/Desktop/EEL6761/R_N{}_k{}_{}_{}.txt".format(self.num_nodes, self.k, color,
+                                                                                          i)
+                    Utils.write_network_topology_to_file(self.nodes, file_name)
 
     def plot_network(self, color, image_file_name):
+        """
+        Visualising the network at current instant of time.
+        :param color: color of interest in visualizing
+        :param image_file_name: a file to capture the network snapshot
+        :return:
+        """
         nodes = set(filter(lambda x: x.color == color, self.nodes))
         node_neighbors = set([nei for node in nodes for nei in node.neighbors])
 
@@ -135,7 +157,7 @@ class Ring:
         graph.add_edges_from(edges)
 
         pos = nx.get_node_attributes(graph, 'pos')
-        nx.draw_networkx(graph, pos, node_color=color_map, edge_color=color_map)
+        nx.draw_networkx(graph, pos, node_color=color_map, node_size=5, with_labels=False, edge_color=color_map)
         plt.grid('on')
         plt.savefig(image_file_name)
         print(nx.is_connected(graph))
@@ -144,4 +166,4 @@ class Ring:
 
 
 if __name__ == "__main__":
-    ring_topology = Ring(10, 3, 40)
+    ring_topology = Ring(45, 3, 40)
