@@ -111,19 +111,21 @@ class Ring:
         Network evolution
         :return:
         """
-        network_color_file_name = "/Users/anmol/Desktop/EEL6761/R_N{}_k{}.txt".format(self.num_nodes, self.k)
+        network_color_file_name = Utils.get_homework_directory() + "/R_N{}_k{}.txt".format(self.num_nodes, self.k)
         Utils.write_network_color_to_file(self.nodes, network_color_file_name)
         for i in range(1, self.epochs):
             for j in range(self.num_nodes):
                 self.communicate(self.nodes[j])
-            if i % 5 == 0:
+            if i % 5 == 0 or i == 1:
                 colors = ["red", "green", "blue"]
                 for color in colors:
-                    image_file_name = "/Users/anmol/Desktop/EEL6761/R_N{}_k{}_{}_{}.jpg".format(self.num_nodes, self.k,
-                                                                                                color, i)
+                    image_file_name = Utils.get_homework_directory() + "/R_N{}_k{}_{}_{}.jpg".format(self.num_nodes,
+                                                                                                     self.k,
+                                                                                                     color, i)
                     self.plot_network(color, image_file_name)
-                    file_name = "/Users/anmol/Desktop/EEL6761/R_N{}_k{}_{}_{}.txt".format(self.num_nodes, self.k, color,
-                                                                                          i)
+                    file_name = Utils.get_homework_directory() + "/R_N{}_k{}_{}_{}.txt".format(self.num_nodes, self.k,
+                                                                                               color,
+                                                                                               i)
                     Utils.write_network_topology_to_file(self.nodes, file_name)
 
     def plot_network(self, color, image_file_name):
@@ -157,13 +159,15 @@ class Ring:
         graph.add_edges_from(edges)
 
         pos = nx.get_node_attributes(graph, 'pos')
-        nx.draw_networkx(graph, pos, node_color=color_map, node_size=5, with_labels=False, edge_color=color_map)
+        nx.draw_networkx(graph, pos, node_color=color_map, node_size=5, with_labels=False, edge_color=color)
         plt.grid('on')
         plt.savefig(image_file_name)
-        print(nx.is_connected(graph))
+        # print("{} node graph is connected".format(color)) if nx.is_connected(graph) else print(
+        #     "{} node graph is disconnected".format(color))
+
         graph.clear()
         plt.clf()
 
 
 if __name__ == "__main__":
-    ring_topology = Ring(45, 3, 40)
+    ring_topology = Ring(100, 3, 40)

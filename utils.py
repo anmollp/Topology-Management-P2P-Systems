@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import math
+import os
 
 
 class Utils:
@@ -8,6 +9,12 @@ class Utils:
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def get_homework_directory():
+        home = os.path.expanduser("~")
+        homework_directory = os.path.join(home, "Patil_EEL6761_HW1")
+        return homework_directory
 
     @staticmethod
     def get_random_color():

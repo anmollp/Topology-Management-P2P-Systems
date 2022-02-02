@@ -138,19 +138,20 @@ class DynamicRing:
         Network evolution and dynamic change in ring topology for every 5th epoch
         :return:
         """
-        network_color_file_name = "/Users/anmol/Desktop/EEL6761/D_N{}_k{}.txt".format(self.num_nodes, self.k)
+        network_color_file_name = Utils.get_homework_directory() + "/D_N{}_k{}.txt".format(self.num_nodes, self.k)
         Utils.write_network_color_to_file(self.nodes, network_color_file_name)
         for _ in range(self.epochs):
-            if self.iteration % 5 == 0:
+            if self.iteration % 5 == 0 or self.iteration == 1:
                 self.rearrange_nodes()
             for i in range(self.num_nodes):
                 self.communicate(self.nodes[i])
             if self.iteration == 1 or self.iteration % 5 == 0:
-                image_file_name = "/Users/anmol/Desktop/EEL6761/D_N{}_k{}_{}_{}.jpg".format(self.num_nodes, self.k,
-                                                                                            "all", self.iteration)
+                image_file_name = Utils.get_homework_directory() + "/D_N{}_k{}_{}_{}.jpg".format(self.num_nodes, self.k,
+                                                                                                 "all", self.iteration)
                 self.plot_network(image_file_name)
-                file_name = "/Users/anmol/Desktop/EEL6761/D_N{}_k{}_{}_{}.txt".format(self.num_nodes, self.k, "all",
-                                                                                      self.iteration)
+                file_name = Utils.get_homework_directory() + "/D_N{}_k{}_{}_{}.txt".format(self.num_nodes, self.k,
+                                                                                           "all",
+                                                                                           self.iteration)
                 Utils.write_network_topology_to_file(self.nodes, file_name)
             self.iteration += 1
 
@@ -194,8 +195,3 @@ class DynamicRing:
         plt.savefig(image_file_name)
         graph.clear()
         plt.clf()
-
-
-if __name__ == "__main__":
-    radii = [2, 3, 5, 7, 8]
-    drt = DynamicRing(10, 3, 5, radii)
