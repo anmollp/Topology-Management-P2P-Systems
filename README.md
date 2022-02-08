@@ -89,10 +89,10 @@ When only the receiving neighbor is updating the neighbor list, for a given topo
 For example consider the images below, for N=100, k=9 and color = green. It takes for the ring topology for green color nodes to achieve convergence in the 15th iteration. Here convergence can be understood as the node connections of only the same color.
 
 ![image](https://user-images.githubusercontent.com/19925448/153047443-cde100df-9686-45ca-9ce4-28be584b5b58.png)
-Iteration 5
+**Iteration 5**
 
 ![image](https://user-images.githubusercontent.com/19925448/153047572-b26c5df8-3f92-4ca3-9ea6-fefbf257f27d.png)
-Iteration 10
+**Iteration 10**
 
 ![image](https://user-images.githubusercontent.com/19925448/153047598-43072d7f-bdc1-4860-ab4d-75e03fad54be.png)
 Iteration 15
@@ -101,10 +101,10 @@ Iteration 15
   
   When both sender and receiver nodes are updating their neighbor list, the number of iterations required to achieve convergence is very small. For example for       N=100, k=9 and color=blue, the convergence is right from the 5th iteration
   ![image](https://user-images.githubusercontent.com/19925448/153048038-cd4f6fd2-07a9-44da-aacd-307441d810dd.png)
-  Iteration 1
+  **Iteration 1**
   
   ![image](https://user-images.githubusercontent.com/19925448/153048089-f101d572-3a7c-48a5-9f41-5ca1b97a15be.png)
-  Iteration 5
+  **Iteration 5**
   
 ### b. For the “ring” topology with N=100, run your program with different k values. How does the choice of k (the number of neighbors) affect your result? What is the minimum value of k to generate the ring without any disconnects at the end of 40 cycles? Generate 3 node graphs, one showing the connection of red nodes, one showing the connection of green nodes, and one showing the connection of blue nodes.
 
@@ -139,13 +139,13 @@ Graphs are all connected
 ```
 
 ![image](https://user-images.githubusercontent.com/19925448/153048720-1b8dc29d-0fd4-4a14-812f-7f918deddbe1.png)
-Iteration 40 - Red Nodes
+**Iteration 40 - Red Nodes**
 
 ![image](https://user-images.githubusercontent.com/19925448/153048766-d3bb324b-cf21-463c-9709-5b4a392e03da.png)
-Iteration 40 - Blue Nodes
+**Iteration 40 - Blue Nodes**
 
 ![image](https://user-images.githubusercontent.com/19925448/153048808-5b365c8e-c6d1-4ec9-9517-7fdf506e1577.png)
-Iteration 40 - Green Nodes
+**Iteration 40 - Green Nodes**
 
 Sometimes it can be the case that with k < 9, connected graphs are possible but to ensure a fully connected graph in every scenario the connectedness is checked multiple times for the same k. Hence after multiple times if the graph remains connected then it is decided that k is the minimum value for connectedness. Hence, for k = 9 the graphs of all colors are connected. As the value of k increases the connectivity of the graph increases as more number of
 neighbors implies more edge connections. Graphs are disconnected.
